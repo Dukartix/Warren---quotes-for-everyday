@@ -6,7 +6,7 @@
   <title>Quotes API Project</title>
 </head>
 <body>
-  <h1>Quotes API Project</h1>
+  <h1>Quotes API Project for StartSchoolers</h1>
   <button id="reload">Get Quotes</button>
   <div id="quotes-container"></div>
 
@@ -16,4 +16,33 @@
     #reload { padding: 10px 20px; cursor: pointer; }
   </style>
 </body>
+  <script>
+const API_URL = 'https://api.api-ninjas.com/v2/quotes';
+const API_KEY = 'EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q';
+const container = document.getElementById('quotes-container');
+const reloadButton = document.getElementById('reload');
+
+async function fetchQuotes() {
+  container.innerHTML = '<p>Loading quotes...</p>';
+  try {
+    const response = await fetch(API_URL, {
+      headers: { 'X-Api-Key': API_KEY }
+    });
+    const data = await response.json();
+    const quotesToDisplay = data.slice(0, 10);
+    container.innerHTML = quotesToDisplay.map(q => `
+      <div class="quote-card">
+        "${q.quote}" - ${q.author || 'Unknown'}
+      </div>
+    `).join('');
+  } catch (error) {
+    container.innerHTML = '<p style="color:red;">Failed to load quotes.</p>';
+    console.error(error);
+  }
+}
+
+reloadButton.addEventListener('click', fetchQuotes);
+fetchQuotes();
+</script>
+
 </html>
