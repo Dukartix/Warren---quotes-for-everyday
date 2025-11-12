@@ -61,23 +61,19 @@
   async function fetchQuotes() {
     container.innerHTML = '<p>Loading quotes...</p>';
 
-    // 🕒 1. Create an AbortController for the timeout
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       controller.abort(); // cancel the request after 5 seconds
     }, 5000); // you can adjust this time
 
     try {
-      // 🧠 2. Fetch data with timeout signal
       const response = await fetch(API_URL, {
         headers: { 'X-Api-Key': API_KEY },
-        signal: controller.signal // connects timeout to this fetch
+        signal: controller.signal 
       });
 
-      // 🧩 3. Stop the timeout once response arrives
       clearTimeout(timeout);
 
-      // 🧱 4. Check for API errors
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           showError('Authentication failed. Please check your API key.');
@@ -94,7 +90,6 @@
         return;
       }
 
-      // ✅ 5. Parse and process data
       const data = await response.json();
 
       if (!Array.isArray(data) || data.length === 0) {
@@ -124,7 +119,7 @@
         console.error('Unexpected error:', error);
       }
     } finally {
-      // 🧹 Always clear timeout to avoid memory leaks
+
       clearTimeout(timeout);
     }
   }
