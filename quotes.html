@@ -54,23 +54,31 @@
 
 <script>
   const API_URL = 'https://api.api-ninjas.com/v2/quotes';
-  const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your real key
+  const API_KEY = 'YOUR_API_KEY_HERE'; // Replace this
   const container = document.getElementById('quotes-container');
   const reloadButton = document.getElementById('reload');
 
   async function fetchQuotes() {
     container.innerHTML = '<p>Loading quotes...</p>';
 
+    // 🕒 1. Create an AbortController for the timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort(); // cancel the request after 5 seconds
+    }, 5000); // you can adjust this time
+
     try {
-      // 🧠 1. Try to fetch the data
+      // 🧠 2. Fetch data with timeout signal
       const response = await fetch(API_URL, {
-        headers: { 'X-Api-Key': EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q },
-        // (optional: add timeout handling if needed)
+        headers: { 'X-Api-Key': API_KEY },
+        signal: controller.signal // connects timeout to this fetch
       });
 
-      // 🧩 2. Check for network-level errors (fetch won’t throw unless connection fails)
+      // 🧩 3. Stop the timeout once response arrives
+      clearTimeout(timeout);
+
+      // 🧱 4. Check for API errors
       if (!response.ok) {
-        // Handle specific HTTP codes
         if (response.status === 401 || response.status === 403) {
           showError('Authentication failed. Please check your API key.');
         } else if (response.status === 404) {
@@ -86,17 +94,15 @@
         return;
       }
 
-      // ✅ 3. Parse JSON response
+      // ✅ 5. Parse and process data
       const data = await response.json();
 
-      // 🧩 4. Validate and process data
       if (!Array.isArray(data) || data.length === 0) {
-        showError('No quotes found at the moment. Try again later.');
+        showError('No quotes found at the moment.');
         console.warn('Unexpected data structure:', data);
         return;
       }
 
-      // Display 10 quotes (or fewer if not available)
       const quotesToDisplay = data.slice(0, 10);
       container.innerHTML = quotesToDisplay.map(q => `
         <div class="quote-card">
@@ -106,13 +112,20 @@
       `).join('');
 
     } catch (error) {
-      // 🚨 5. Handle connection failures or other runtime errors
-      if (error.name === 'TypeError') {
+      // 🚨 6. Handle network + timeout errors
+      if (error.name === 'AbortError') {
+        showError('The request took too long. Please try again.');
+        console.error('Request timed out:', error);
+      } else if (error.name === 'TypeError') {
         showError('Network problem. Please check your internet connection.');
+        console.error('Network error:', error);
       } else {
         showError('Unexpected error occurred. Please try again.');
+        console.error('Unexpected error:', error);
       }
-      console.error('Network or runtime error:', error);
+    } finally {
+      // 🧹 Always clear timeout to avoid memory leaks
+      clearTimeout(timeout);
     }
   }
 
@@ -121,9 +134,7 @@
   }
 
   reloadButton.addEventListener('click', fetchQuotes);
-
-  // Run on page load
-  fetchQuotes();
+  fetchQuotes(); // load on page start
 </script>
 
 </body>
