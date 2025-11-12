@@ -52,52 +52,79 @@
   <button id="reload">Get New Quotes</button>
   <div id="quotes-container"></div>
 
-  <script>
-    const API_URL = 'https://api.api-ninjas.com/v2/quotes?category=success';
-    const API_KEY = 'EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q'; // Replace this!
+<script>
+  const API_URL = 'https://api.api-ninjas.com/v2/quotes';
+  const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your real key
+  const container = document.getElementById('quotes-container');
+  const reloadButton = document.getElementById('reload');
 
-    async function fetchQuotes() {
-      const container = document.getElementById('quotes-container');
-      container.innerHTML = '<p>Loading quotes...</p>';
+  async function fetchQuotes() {
+    container.innerHTML = '<p>Loading quotes...</p>';
 
-      try {
-        const response = await fetch(API_URL, {
-          headers: { 'X-Api-Key': API_KEY }
-        });
+    try {
+      // 🧠 1. Try to fetch the data
+      const response = await fetch(API_URL, {
+        headers: { 'X-Api-Key': EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q },
+        // (optional: add timeout handling if needed)
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
+      // 🧩 2. Check for network-level errors (fetch won’t throw unless connection fails)
+      if (!response.ok) {
+        // Handle specific HTTP codes
+        if (response.status === 401 || response.status === 403) {
+          showError('Authentication failed. Please check your API key.');
+        } else if (response.status === 404) {
+          showError('Service not found. The API endpoint may be incorrect.');
+        } else if (response.status === 429) {
+          showError('Too many requests. Please wait a moment before trying again.');
+        } else if (response.status >= 500) {
+          showError('The server is having issues. Please try again later.');
+        } else {
+          showError('Something went wrong while fetching quotes.');
         }
-
-        const data = await response.json();
-
-        // Handle edge cases
-        if (!Array.isArray(data) || data.length === 0) {
-          container.innerHTML = '<p>No quotes available right now.</p>';
-          return;
-        }
-
-        // ✅ Process & transform data (only show 10)
-        const quotesToDisplay = data.slice(0, 10);
-
-        // ✅ Render to HTML
-        container.innerHTML = quotesToDisplay.map(q => `
-          <div class="quote-card">
-            <div class="quote-text">"${q.quote}"</div>
-            <div class="quote-author">– ${q.author || 'Unknown'}</div>
-          </div>
-        `).join('');
-
-      } catch (error) {
-        console.error('Error fetching quotes:', error);
-        container.innerHTML = '<p>Failed to load quotes. Please try again later.</p>';
+        console.error(`API Error: ${response.status} ${response.statusText}`);
+        return;
       }
+
+      // ✅ 3. Parse JSON response
+      const data = await response.json();
+
+      // 🧩 4. Validate and process data
+      if (!Array.isArray(data) || data.length === 0) {
+        showError('No quotes found at the moment. Try again later.');
+        console.warn('Unexpected data structure:', data);
+        return;
+      }
+
+      // Display 10 quotes (or fewer if not available)
+      const quotesToDisplay = data.slice(0, 10);
+      container.innerHTML = quotesToDisplay.map(q => `
+        <div class="quote-card">
+          <div class="quote-text">"${q.quote}"</div>
+          <div class="quote-author">– ${q.author || 'Unknown'}</div>
+        </div>
+      `).join('');
+
+    } catch (error) {
+      // 🚨 5. Handle connection failures or other runtime errors
+      if (error.name === 'TypeError') {
+        showError('Network problem. Please check your internet connection.');
+      } else {
+        showError('Unexpected error occurred. Please try again.');
+      }
+      console.error('Network or runtime error:', error);
     }
+  }
 
-    document.getElementById('reload').addEventListener('click', fetchQuotes);
+  function showError(message) {
+    container.innerHTML = `<p style="color:red;">${message}</p>`;
+  }
 
-    // Load quotes on page load
-    fetchQuotes();
-  </script>
+  reloadButton.addEventListener('click', fetchQuotes);
+
+  // Run on page load
+  fetchQuotes();
+</script>
+
 </body>
 </html>
