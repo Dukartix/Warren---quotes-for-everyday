@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quotes API Integration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f6fa;
+      padding: 40px;
+      max-width: 800px;
+      margin: auto;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #0078ff;
+    }
+    .quote-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 15px 0;
+    }
+    .quote-text {
+      font-style: italic;
+    }
+    .quote-author {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    #reload {
+      display: block;
+      margin: 30px auto;
+      padding: 10px 20px;
+      background-color: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #reload:hover {
+      background-color: #005ecb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Quotes of the Day</h1>
+  <button id="reload">Get New Quotes</button>
+  <div id="quotes-container"></div>
+
+  <script>
+    const API_URL = 'https://api.api-ninjas.com/v2/quotes?category=success';
+    const API_KEY = 'YOUR_API_KEY_HERE'; // Replace this!
+
+    async function fetchQuotes() {
+      const container = document.getElementById('quotes-container');
+      container.innerHTML = '<p>Loading quotes...</p>';
+
+      try {
+        const response = await fetch(API_URL, {
+          headers: { 'X-Api-Key': API_KEY }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Handle edge cases
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = '<p>No quotes available right now.</p>';
+          return;
+        }
+
+        // ✅ Process & transform data (only show 10)
+        const quotesToDisplay = data.slice(0, 10);
+
+        // ✅ Render to HTML
+        container.innerHTML = quotesToDisplay.map(q => `
+          <div class="quote-card">
+            <div class="quote-text">"${q.quote}"</div>
+            <div class="quote-author">– ${q.author || 'Unknown'}</div>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error fetching quotes:', error);
+        container.innerHTML = '<p>Failed to load quotes. Please try again later.</p>';
+      }
+    }
+
+    document.getElementById('reload').addEventListener('click', fetchQuotes);
+
+    // Load quotes on page load
+    fetchQuotes();
+  </script>
+</body>
+</html>
