@@ -9,6 +9,8 @@
   <h1>Quotes API Project for StartSchoolers</h1>
   <button id="reload">Get Quotes</button>
   <div id="quotes-container"></div>
+  <div id="loading" class="spinner" style="display: none;"></div>
+
 
 <style>
   body { 
@@ -39,6 +41,21 @@
     color: white;
     border-radius: 5px;
   }
+  .spinner {
+  border: 6px solid rgba(255,255,255,0.2);
+  border-top: 6px solid white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 </style>
 </body>
 <script>
@@ -46,6 +63,7 @@ const API_URL = 'https://api.api-ninjas.com/v2/quotes';
 const API_KEY = 'EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q';
 const container = document.getElementById('quotes-container');
 const reloadButton = document.getElementById('reload');
+const loading = document.getElementById('loading');   
 
 async function fetchQuotes() {
   container.innerHTML = '<p>Loading quotes...</p>';
@@ -59,8 +77,10 @@ async function fetchQuotes() {
       signal: controller.signal
     });
 
+     <! -- 3. Error handling ----------------------------- -->
+       
     clearTimeout(timeout);
-
+       
     if (!response.ok) {
       if (response.status === 401) showError('Authentication failed.');
       else if (response.status === 404) showError('Service not found.');
