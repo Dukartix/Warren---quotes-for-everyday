@@ -1,136 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quotes API Integration</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f3f6fa;
-      padding: 40px;
-      max-width: 800px;
-      margin: auto;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #0078ff;
-    }
-    .quote-card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin: 15px 0;
-    }
-    .quote-text {
-      font-style: italic;
-    }
-    .quote-author {
-      text-align: right;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    #reload {
-      display: block;
-      margin: 30px auto;
-      padding: 10px 20px;
-      background-color: #0078ff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #reload:hover {
-      background-color: #005ecb;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotes API Project</title>
 </head>
 <body>
-  <h1>Quotes of the Day</h1>
-  <button id="reload">Get New Quotes</button>
+  <h1>Quotes API Project for StartSchoolers</h1>
+  <button id="reload">Get Quotes</button>
   <div id="quotes-container"></div>
 
+<style>
+  body { 
+    font-family: Arial; 
+    text-align: center; 
+    padding: 40px; 
+    background-image: url('https://images.unsplash.com/photo-1552083375-1447ce886485?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170');
+    background-size: cover;          /* Make image cover entire page */
+    background-position: center;     /* Center the image */
+    background-repeat: no-repeat;    /* Prevent tiling */
+    color: white;                    /* Make text visible on image */
+  }
+
+  .quote-card { 
+    border: 1px solid rgba(255,255,255,0.3); 
+    padding: 20px; 
+    margin: 10px auto; 
+    border-radius: 8px; 
+    max-width: 600px; 
+    background-color: rgba(0,0,0,0.5); /* semi-transparent background for readability */
+  }
+
+  #reload { 
+    padding: 10px 20px; 
+    cursor: pointer; 
+    background-color: rgba(0,0,0,0.5);
+    border: none;
+    color: white;
+    border-radius: 5px;
+  }
+</style>
+</body>
 <script>
-  const API_URL = 'https://api.api-ninjas.com/v2/quotes';
-  const API_KEY = 'EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q'; 
-  const container = document.getElementById('quotes-container');
-  const reloadButton = document.getElementById('reload');
+const API_URL = 'https://api.api-ninjas.com/v2/quotes';
+const API_KEY = 'EFG3H3r8W8KBhGf+WrMOoA==ehzTTDWiKBYmyO7Q';
+const container = document.getElementById('quotes-container');
+const reloadButton = document.getElementById('reload');
 
-  async function fetchQuotes() {
-    container.innerHTML = '<p>Loading quotes...</p>';
+async function fetchQuotes() {
+  container.innerHTML = '<p>Loading quotes...</p>';
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort(); // cancel the request after 5 seconds
-    }, 5000); // you can adjust this time
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
 
-    try {
-      const response = await fetch(API_URL, {
-        headers: { 'X-Api-Key': API_KEY },
-        signal: controller.signal 
-      });
+  try {
+    const response = await fetch(API_URL, {
+      headers: { 'X-Api-Key': API_KEY },
+      signal: controller.signal
+    });
 
-      clearTimeout(timeout);
+       
+    clearTimeout(timeout);
+       
+    if (!response.ok) {
+      if (response.status === 401) showError('Authentication failed.');
+      else if (response.status === 404) showError('Service not found.');
+      else if (response.status === 429) showError('Too many requests.');
+      else if (response.status >= 500) showError('Server error.');
+      else showError('Unknown API error.');
+      console.error(response.status, response.statusText);
+      return;
+    }
 
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          showError('Authentication failed. Please check your API key.');
-        } else if (response.status === 404) {
-          showError('Service not found. The API endpoint may be incorrect.');
-        } else if (response.status === 429) {
-          showError('Too many requests. Please wait a moment before trying again.');
-        } else if (response.status >= 500) {
-          showError('The server is having issues. Please try again later.');
-        } else {
-          showError('Something went wrong while fetching quotes.');
-        }
-        console.error(`API Error: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!Array.isArray(data) || data.length === 0) {
-        showError('No quotes found at the moment.');
-        console.warn('Unexpected data structure:', data);
-        return;
-      }
-
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) showError('No quotes available.');
+    else {
       const quotesToDisplay = data.slice(0, 10);
       container.innerHTML = quotesToDisplay.map(q => `
-        <div class="quote-card">
-          <div class="quote-text">"${q.quote}"</div>
-          <div class="quote-author">– ${q.author || 'Unknown'}</div>
-        </div>
+        <div class="quote-card">"${q.quote}" - ${q.author || 'Unknown'}</div>
       `).join('');
-
-    } catch (error) {
-      // 🚨 6. Handle network + timeout errors
-      if (error.name === 'AbortError') {
-        showError('The request took too long. Please try again.');
-        console.error('Request timed out:', error);
-      } else if (error.name === 'TypeError') {
-        showError('Network problem. Please check your internet connection.');
-        console.error('Network error:', error);
-      } else {
-        showError('Unexpected error occurred. Please try again.');
-        console.error('Unexpected error:', error);
-      }
-    } finally {
-
-      clearTimeout(timeout);
     }
-  }
 
-  function showError(message) {
-    container.innerHTML = `<p style="color:red;">${message}</p>`;
+  } catch (error) {
+    if (error.name === 'AbortError') showError('Request timed out.');
+    else if (error.name === 'TypeError') showError('Network error.');
+    else showError('Unexpected error.');
+    console.error(error);
+  } finally {
+    clearTimeout(timeout);
   }
+}
 
-  reloadButton.addEventListener('click', fetchQuotes);
-  fetchQuotes(); // load on page start
+function showError(msg) {
+  container.innerHTML = `<p style="color:red;">${msg}</p>`;
+}
+
+reloadButton.addEventListener('click', fetchQuotes);
+fetchQuotes();
 </script>
 
-</body>
+
 </html>
